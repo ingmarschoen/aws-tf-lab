@@ -9,7 +9,7 @@ resource "aws_vpc" "main" {
   }
 }
 
-resource "aws_internet_internet_gateway" "main" {
+resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
 }
 
@@ -28,7 +28,7 @@ resource "aws_route_table" "default" {
   }
 }
 
-rosource "aws_route_table_association" "main" {
+resource "aws_route_table_association" "main" {
   subnet_id = aws_subnet.main.id
   route_table_id = aws_route_table.default.id
 }
@@ -51,25 +51,65 @@ resource "aws_network_acl" "allowall" {
     action = "allow"
     cidr_block = "0.0.0.0/0"
     from_port = 0
+    to_port = 0
   }
 }
 
 resource "aws_security_group" "allowall" {
   name = "TF VPC lab allow all"
-  description "Allow all traffic"
+  description = "Allow all traffic"
   vpc_id = aws_vpc.main.id
 
   ingress {
     from_port = 22
     to_port = 22
     protocol = "tcp"
-    cidr_block = ["0.0.0.0/0"]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
     from_port = 0
     to_port = 0
     protocol = "-1"
-    cidr_block = ["0.0.0.0/0"]
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+resource "aws_eip" "webserver" {
+  instance = aws_instance.webserver.id
+  vpc = true
+  depends_on = [aws_internet_gateway.main]
+}
 
+resource "aws_key_pair" "default" {
+  key_name = "tf_lab_key"
+  public_key = TF_VAR_sshpubkey
+}
+
+data "aws_ami" "ubuntu" {
+  most_recent = true
+
+  filter {
+    name = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*"]
+  }
+
+  filter {
+    name = "virtualization-type"
+    values = ["hvm"]
+  }
+
+  owners = ["099720109477"]
+}
+
+resource "aws_instance" "webserver" {
+  ami = data.aws_ami.ubuntu.id
+  availability_zone = "eu-central-1a"
+  instance_type = "t2.micro"
+  key_name = aws_key_pair.default.key_name
+  vpc_security_group_ids = [aws_security_group.allowall.id]
+  subnet_id = aws_subnet.main.id
+}
+
+output "public_ip" {
+  value = aws_eip.webserver.public_ip
 }
