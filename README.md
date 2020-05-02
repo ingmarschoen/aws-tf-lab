@@ -52,21 +52,21 @@ The pubkey is by design no secret but for the porpuse of demonstration it's trea
 
 ### Verify
 ```console
-teraform validate
+terraform validate
 ```
 
 ### Plan
 ```console
-teraform plan
+terraform plan
 ```
 ### Run
 ```console
-teraform apply
+terraform apply
 ```
 
 ### Destroy
 ```console
-teraform destroy
+terraform destroy
 ```
 
 
