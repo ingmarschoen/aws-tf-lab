@@ -82,7 +82,7 @@ resource "aws_eip" "webserver" {
 
 resource "aws_key_pair" "default" {
   key_name = "tf_lab_key"
-  public_key = TF_VAR_sshpubkey
+  public_key = var.sshpubkey
 }
 
 data "aws_ami" "ubuntu" {
